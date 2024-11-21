@@ -1,0 +1,74 @@
+const fs = require("fs");
+
+function compareJSON(json1, json2) {
+  const discrepancies = [];
+
+  function compare(json1, json2, path = "") {
+    for (const key in json1) {
+      if (json1.hasOwnProperty(key)) {
+        const newPath = path ? `${path}.${key}` : key;
+        if (!json2.hasOwnProperty(key)) {
+          discrepancies.push(`Missing key in JSON-2: ${newPath}`);
+        } else if (typeof json1[key] === "object" && json1[key] !== null) {
+          compare(json1[key], json2[key], newPath);
+        } else if (json1[key] !== json2[key]) {
+          discrepancies.push(
+            `Value mismatch at ${newPath}: ${json1[key]} !== ${json2[key]}`
+          );
+        }
+      }
+    }
+
+    for (const key in json2) {
+      if (json2.hasOwnProperty(key) && !json1.hasOwnProperty(key)) {
+        const newPath = path ? `${path}.${key}` : key;
+        discrepancies.push(`Missing key in JSON-1: ${newPath}`);
+      }
+    }
+  }
+
+  compare(json1, json2);
+  return discrepancies;
+}
+
+// Example usage:
+const json2 = {
+  a: 1,
+  b: { c: 2, d: 4, f: 5 },
+  e: 5,
+  n: ["f", { h: 4, i: [{ y: 1, z: 7 }] }],
+};
+const json3 = {
+  a: 1,
+  b: { c: 3, d: 4, n: 70 },
+  f: 6,
+  n: ["f", { h: 1, i: [{ y: 2, z: 8 }] }],
+};
+
+console.log(compareJSON(json2, json3));
+
+
+
+
+async function readJSON(filePath) {
+  try {
+    const data = await fs.readFile(filePath, "utf-8");
+    return JSON.parse(data); // Parse and return the JSON object
+  } catch (error) {
+    console.error("Error reading JSON:", error);
+    return null; // Return null if an error occurs
+  }
+}
+
+// // Example usage
+const JSON_File1 = "../page-support/testData.json";
+const JSON_File2 = "../page-support/testData2.json";
+
+(async () => {
+  const jsonData = await readJSON(JSON_File1);
+  if (jsonData) {
+    console.log(jsonData.accountInformation); // Access ACCOUNTNO from the JSON
+  }
+})();
+
+// console.log(readJSON(JSON_File1).accountInformation);
