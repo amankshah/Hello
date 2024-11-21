@@ -1,1 +1,20 @@
-vscode://Codeium.codeium#state=1e7c6aaf-8794-41d1-a064-e436510f9d60&access_token=eyJhbGciOiJSUzI1NiIsImtpZCI6ImI4Y2FjOTViNGE1YWNkZTBiOTY1NzJkZWU4YzhjOTVlZWU0OGNjY2QiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiVGVzdCBUbyBQcm8iLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jTDNtenFDX09Lb04tampBTUdjekFIdFhqUUszN3F6UlRrY282VnhHc19waVE9czk2LWMiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZXhhMi1mYjE3MCIsImF1ZCI6ImV4YTItZmIxNzAiLCJhdXRoX3RpbWUiOjE3MzA5NjY4ODAsInVzZXJfaWQiOiJvYzM5c3JMZTIyWXFkQmx6Qjh3WGYxbkczdmgxIiwic3ViIjoib2MzOXNyTGUyMllxZEJsekI4d1hmMW5HM3ZoMSIsImlhdCI6MTczMDk2Njg4MywiZXhwIjoxNzMwOTcwNDgzLCJlbWFpbCI6InRlc3R0b3Byb0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJnb29nbGUuY29tIjpbIjEwMzEwOTgxMzQwMjQ5NTI0NzQxNyJdLCJlbWFpbCI6WyJ0ZXN0dG9wcm9AZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoiZ29vZ2xlLmNvbSJ9fQ.aEEhNu6ziQGwN05JoLU0aqhKoxlj6IhphKINyajRJRMFMQl7_5iwxjDumI_S7tjEj3YC4iugEaOeMUlAm_INdw4ivoJCLfLOLOu-_7_c0vDCLSesgXLfWvSSaM-BCkv3aqSB8l8BPj_8H4UnnjJsD1AxpTKy9R4N5mL5s6aR5BOkZr_zpjpUQLmDxySsgfRfublUNOMuBZOykFuKoGDuU7pI7CMthQxqh5JPaCIWoHQA0w-a8ezLSOVIBb7WzBp_KbrV80Ey1YxkkCBZni6bzTz2fy_k6Q9k5OaczVi_UJ9WaXQ8jyDkZ_QRbSO_wk5ZCcb9VO5ZvV_K930idHcLyw
+const fs = require('fs').promises;
+
+async function readJSON(filePath) {
+  try {
+    const data = await fs.readFile(filePath, 'utf-8');
+    return JSON.parse(data); // Parse and return the JSON object
+  } catch (error) {
+    console.error('Error reading JSON:', error);
+    return null; // Return null if an error occurs
+  }
+}
+
+// Example usage
+(async () => {
+  const jsonData = await readJSON('../PAGE.JSON');
+  if (jsonData) {
+    console.log(jsonData.ACCOUNTNO); // Access ACCOUNTNO from the JSON
+  }
+})();
+
