@@ -1,0 +1,80 @@
+class SummaryReporter {
+  onBegin(config, suite) {
+    this.total = 0;
+    this.passed = 0;
+    this.failed = 0;
+    this.skipped = 0;
+    console.log('Starting the test run...');
+  }
+
+  onTestEnd(test, result) {
+    this.total++;
+    if (result.status === 'passed') {
+      this.passed++;
+    } else if (result.status === 'failed') {
+      this.failed++;
+    } else if (result.status === 'skipped') {
+      this.skipped++;
+    }
+  }
+
+  onEnd() {
+    console.log('\n--- Test Summary ---');
+    console.log(`Total tests: ${this.total}`);
+    console.log(`✅ Passed: ${this.passed}`);
+    console.log(`❌ Failed: ${this.failed}`);
+    console.log(`⏭️ Skipped: ${this.skipped}`);
+  }
+}
+
+module.exports = SummaryReporter;
+
+
+
+//place in config file 
+
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
+  reporter: [
+    ['list'],
+    ['./summaryReporter.js'] // Add your custom reporter here
+  ]
+});
+
+
+
+//--------- for cucumber 
+// utils/stats.js
+module.exports = {
+  total: 0,
+  passed: 0,
+  failed: 0,
+  skipped: 0
+};
+
+
+//hooks.js
+const { After, AfterAll } = require('@cucumber/cucumber');
+const stats = require('../utils/stats');
+
+After(function (scenario) {
+  stats.total++;
+  if (scenario.result.status === 'PASSED') {
+    stats.passed++;
+  } else if (scenario.result.status === 'FAILED') {
+    stats.failed++;
+  } else {
+    stats.skipped++;
+  }
+});
+
+AfterAll(() => {
+  console.log('\n--- Test Summary ---');
+  console.log(`Total Scenarios: ${stats.total}`);
+  console.log(`✅ Passed: ${stats.passed}`);
+  console.log(`❌ Failed: ${stats.failed}`);
+  console.log(`⏭️ Skipped: ${stats.skipped}`);
+});
+
+
