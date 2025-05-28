@@ -1,0 +1,135 @@
+const xlsx = require('xlsx');
+const fs = require('fs');
+
+class SheetWrapper {
+  constructor(sheetName, workbook, filePath) {
+    this.sheetName = sheetName;
+    this.workbook = workbook;
+    this.filePath = filePath;
+
+    if (!this.workbook.Sheets[sheetName]) {
+      this.workbook.Sheets[sheetName] = {};
+      if (!this.workbook.SheetNames.includes(sheetName)) {
+        this.workbook.SheetNames.push(sheetName);
+      }
+    }
+
+    this.sheet = this.workbook.Sheets[sheetName];
+  }
+
+  setValue(row, col, value) {
+    const cellAddress = xlsx.utils.encode_cell({ r: row - 1, c: col - 1 });
+    this.sheet[cellAddress] = { t: 's', v: value };
+
+    const ref = this.sheet['!ref'] || 'A1';
+    const range = xlsx.utils.decode_range(ref);
+    range.s.r = Math.min(range.s.r, row - 1);
+    range.s.c = Math.min(range.s.c, col - 1);
+    range.e.r = Math.max(range.e.r, row - 1);
+    range.e.c = Math.max(range.e.c, col - 1);
+    this.sheet['!ref'] = xlsx.utils.encode_range(range);
+
+    return this;
+  }
+
+  getValue(row, col) {
+    const cellAddress = xlsx.utils.encode_cell({ r: row - 1, c: col - 1 });
+    const cell = this.sheet[cellAddress];
+    return cell ? cell.v : null;
+  }
+
+  findValue(valueToFind) {
+    const range = xlsx.utils.decode_range(this.sheet['!ref'] || 'A1');
+    const matches = [];
+
+    for (let r = range.s.r; r <= range.e.r; r++) {
+      for (let c = range.s.c; c <= range.e.c; c++) {
+        const cell = this.sheet[xlsx.utils.encode_cell({ r, c })];
+        if (cell && cell.v === valueToFind) {
+          matches.push({ row: r + 1, col: c + 1 });
+        }
+      }
+    }
+    return matches;
+  }
+
+  findInRow(row, valueToFind) {
+    const range = xlsx.utils.decode_range(this.sheet['!ref'] || 'A1');
+    const r = row - 1;
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      const cell = this.sheet[xlsx.utils.encode_cell({ r, c })];
+      if (cell && cell.v === valueToFind) {
+        return { row, col: c + 1 };
+      }
+    }
+    return null;
+  }
+
+  findInCol(col, valueToFind) {
+    const range = xlsx.utils.decode_range(this.sheet['!ref'] || 'A1');
+    const c = col - 1;
+    for (let r = range.s.r; r <= range.e.r; r++) {
+      const cell = this.sheet[xlsx.utils.encode_cell({ r, c })];
+      if (cell && cell.v === valueToFind) {
+        return { row: r + 1, col };
+      }
+    }
+    return null;
+  }
+
+  save() {
+    xlsx.writeFile(this.workbook, this.filePath);
+    return this;
+  }
+}
+
+class Excel {
+  constructor(filePath) {
+    this.filePath = filePath;
+    this.workbook = fs.existsSync(filePath)
+      ? xlsx.readFile(filePath)
+      : xlsx.utils.book_new();
+  }
+
+  sheet(sheetName) {
+    return new SheetWrapper(sheetName, this.workbook, this.filePath);
+  }
+
+  listSheets() {
+    return this.workbook.SheetNames;
+  }
+}
+
+module.exports = (filePath) => new Excel(filePath);
+
+
+
+
+//---- Example -------
+const Excel = require('./excel')('./example.xlsx');
+
+// Set and save values
+Excel.sheet('Sheet1')
+  .setValue(1, 1, 'Hello')
+  .setValue(2, 1, 'World')
+  .save();
+
+// Read a value
+const val = Excel.sheet('Sheet1').getValue(1, 1);
+console.log('Value:', val); // Hello
+
+// Find value in sheet
+const allMatches = Excel.sheet('Sheet1').findValue('World');
+console.log('All Matches:', allMatches);
+
+// Find in row
+const rowMatch = Excel.sheet('Sheet1').findInRow(2, 'World');
+console.log('Row Match:', rowMatch);
+
+// Find in column
+const colMatch = Excel.sheet('Sheet1').findInCol(1, 'World');
+console.log('Column Match:', colMatch);
+
+// List all sheets
+console.log('Sheets:', Excel.listSheets());
+
