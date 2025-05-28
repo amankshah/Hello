@@ -1,0 +1,87 @@
+const xlsx = require("xlsx");
+const path = require("path");
+
+class ExcelReader {
+  constructor(filePath) {
+    this.workbook = xlsx.readFile(filePath);
+  }
+
+  // Get value by sheet name, row, and col (1-based index)
+  getValue(sheetName, row, col) {
+    const sheet = this.workbook.Sheets[sheetName];
+    if (!sheet) return null;
+
+    const cellAddress = xlsx.utils.encode_cell({ r: row - 1, c: col - 1 });
+    const cell = sheet[cellAddress];
+    return cell ? cell.v : null;
+  }
+
+  // Find cell(s) in the sheet with a specific value
+  findValueInSheet(sheetName, valueToFind) {
+    const sheet = this.workbook.Sheets[sheetName];
+    if (!sheet) return [];
+
+    const range = xlsx.utils.decode_range(sheet["!ref"]);
+    const matches = [];
+
+    for (let row = range.s.r; row <= range.e.r; row++) {
+      for (let col = range.s.c; col <= range.e.c; col++) {
+        const cellAddress = xlsx.utils.encode_cell({ r: row, c: col });
+        const cell = sheet[cellAddress];
+        if (cell && cell.v === valueToFind) {
+          matches.push({ row: row + 1, col: col + 1 });
+        }
+      }
+    }
+    return matches;
+  }
+
+  // Find value in a row (rowNum is 1-based)
+  findValueInRow(sheetName, rowNum, valueToFind) {
+    const sheet = this.workbook.Sheets[sheetName];
+    const range = xlsx.utils.decode_range(sheet["!ref"]);
+    const row = rowNum - 1;
+
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cellAddress = xlsx.utils.encode_cell({ r: row, c: col });
+      const cell = sheet[cellAddress];
+      if (cell && cell.v === valueToFind) {
+        return { row: rowNum, col: col + 1 };
+      }
+    }
+    return null;
+  }
+
+  // Find value in a column (colNum is 1-based)
+  findValueInCol(sheetName, colNum, valueToFind) {
+    const sheet = this.workbook.Sheets[sheetName];
+    const range = xlsx.utils.decode_range(sheet["!ref"]);
+    const col = colNum - 1;
+
+    for (let row = range.s.r; row <= range.e.r; row++) {
+      const cellAddress = xlsx.utils.encode_cell({ r: row, c: col });
+      const cell = sheet[cellAddress];
+      if (cell && cell.v === valueToFind) {
+        return { row: row + 1, col: colNum };
+      }
+    }
+    return null;
+  }
+}
+
+module.exports = ExcelReader;
+
+const ExcelReader = require('./utils/excelReader');
+const reader = new ExcelReader('./data.xlsx');
+
+// Get value by sheet name and cell
+console.log(reader.getValue("Sheet1", 2, 3)); // e.g., value at B2
+
+// Search for a value in sheet
+console.log(reader.findValueInSheet("Sheet1", "TargetValue")); // [{ row: 2, col: 3 }, ...]
+
+// Search for a value in a specific row
+console.log(reader.findValueInRow("Sheet1", 2, "TargetValue")); // { row: 2, col: 3 }
+
+// Search for a value in a specific column
+console.log(reader.findValueInCol("Sheet1", 2, "TargetValue")); // { row: 4, col: 2 }
